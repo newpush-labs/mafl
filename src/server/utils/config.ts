@@ -60,6 +60,8 @@ function createTagMap(tags: Tag[]): TagMap {
   }, new Map())
 }
 
+let cachedConfig: CompleteConfig | null = null
+
 /**
  * Load config from storage
  */
@@ -98,10 +100,18 @@ export async function loadConfig(): Promise<CompleteConfig> {
         }
       }
 
-      return defu({ ...config, services }, defaultConfig)
+      const finalConfig = defu({ ...config, services }, defaultConfig)
+      cachedConfig = finalConfig
+
+      return finalConfig
     } catch (e) {
       if (i === retries - 1) {
         logger.error(e)
+
+        if (cachedConfig) {
+          logger.warn('Failed to load new config, using cached version.')
+          return cachedConfig
+        }
 
         if (e instanceof Error) {
           defaultConfig.error = e.message
