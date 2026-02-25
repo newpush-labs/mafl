@@ -7,7 +7,7 @@ on:
 
 jobs:
   push_to_registries:
-    name: Push Docker image to multiple registries
+    name: Push Docker image to GHCR
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -21,12 +21,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -47,7 +41,8 @@ jobs:
           fi
           releases=""
           for tag in "${tags[@]}"; do
-            releases="${releases:+$releases,}${{ secrets.DOCKERHUB_USERNAME }}/mafl:$tag,ghcr.io/${{ secrets.DOCKERHUB_USERNAME }}/mafl:$tag"
+            repo=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            releases="${releases:+$releases,}ghcr.io/$repo:$tag"
           done
           echo "releases=$releases" >> "$GITHUB_OUTPUT"
 
